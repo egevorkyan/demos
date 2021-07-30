@@ -1,4 +1,4 @@
-#Hashicorp Vault demos
+## Hashicorp Vault demos
 
 Sealed state:
 - Vault starts in Sealed state
