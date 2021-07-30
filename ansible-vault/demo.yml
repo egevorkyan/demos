@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  vars_files:
+    - vars.yml
+  vars:
+    - demo: "{{ lookup('hashi_vault', 'secret=demo/vault token={{ vtoken }} url=http://localhost:8200 validate_certs=false') }}"
+  tasks:
+    - name: 'printing values from hashicorp vault, with demo user authenticated'
+      debug:
+        msg: "{{ demo.data }}"
+
+    - name: 'set facts to use later'
+      set_fact:
+        vault_data: "{{ lookup('hashi_vault', 'secret=demo1/auth validate_certs=false') }}"
+        secret: "{{ lookup('hashi_vault', 'secret=demo1/auth:secret validate_certs=false') }}"
+        user: "{{ lookup('hashi_vault', 'secret=demo1/auth:user validate_certs=false') }}"
+
+    - name: 'printing values from hashicorp vault, with demo1 user authenticated'
+      debug:
+        msg: "User: {{ vault_data.user }} and Secret: {{ vault_data.secret }}"
+
+    - name: 'printing values from hashicorp vault, with demo1 user authenticated - option2'
+      debug:
+        msg: "User: {{ user }} and Secret: {{ secret }}"

@@ -1,1 +1,127 @@
-# demos
+#Hashicorp Vault demos
+
+Sealed state:
+- Vault starts in Sealed state
+- Vault is configured to know where and how to access the physical storage
+- Vault is not aware how to decrypt any of it
+
+Unsealed state:
+- Unsealing plaintext master key obtaining process
+- Master key is required to read decryption key to decrypt data
+- Prior unsealing almost no operation is possible on Vault (only possible to unseal and check status of seal)
+
+## Vault user policy
+Each user in this demo configured with per user dedicated policy.
+That means each user will have access to granted to user KV secret.
+Example of policy is below:
+```sh
+
+# Allow tokens to look up their own properties
+path "auth/token/lookup-self" {
+capabilities = ["read"]
+}
+
+# Allow tokens to renew themselves
+path "auth/token/renew-self" {
+capabilities = ["update"]
+}
+
+# Allow tokens to revoke themselves
+path "auth/token/revoke-self" {
+capabilities = ["update"]
+}
+
+# Allow a token to look up its own capabilities on a path
+path "sys/capabilities-self" {
+capabilities = ["update"]
+}
+
+# Allow a token to look up its own entity by id or name
+path "identity/entity/id/{{identity.entity.id}}" {
+capabilities = ["read"]
+}
+path "identity/entity/name/{{identity.entity.name}}" {
+capabilities = ["read"]
+}
+
+
+# Allow a token to look up its resultant ACL from all policies. This is useful
+# for UIs. It is an internal path because the format may change at any time
+# based on how the internal ACL features and capabilities change.
+path "sys/internal/ui/resultant-acl" {
+capabilities = ["read"]
+}
+
+# Allow a token to renew a lease via lease_id in the request body; old path for
+# old clients, new path for newer
+path "sys/renew" {
+capabilities = ["update"]
+}
+path "sys/leases/renew" {
+capabilities = ["update"]
+}
+
+# Allow looking up lease properties. This requires knowing the lease ID ahead
+# of time and does not divulge any sensitive information.
+path "sys/leases/lookup" {
+capabilities = ["update"]
+}
+
+# Allow a token to manage its own demo
+path "demo/*" {
+capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# Allow a token to wrap arbitrary values in a response-wrapping token
+path "sys/wrapping/wrap" {
+capabilities = ["update"]
+}
+
+# Allow a token to look up the creation time and TTL of a given
+# response-wrapping token
+path "sys/wrapping/lookup" {
+capabilities = ["update"]
+}
+
+# Allow a token to unwrap a response-wrapping token. This is a convenience to
+# avoid client token swapping since this is also part of the response wrapping
+# policy.
+path "sys/wrapping/unwrap" {
+capabilities = ["update"]
+}
+
+# Allow general purpose tools
+path "sys/tools/hash" {
+capabilities = ["update"]
+}
+path "sys/tools/hash/*" {
+capabilities = ["update"]
+}
+
+# Allow checking the status of a Control Group request if the user has the
+# accessor
+path "sys/control-group/request" {
+capabilities = ["update"]
+}
+```
+>**_NOTE:_** Policy grants to user demo named secret, user can read, write, update, KVs inside demo secret,
+but user can't create additional new secret.
+
+## Example usage of Hashicorp Vault
+>**_NOTE:_**
+For MacOS users to run ansible playbooks containing hashicorp vault plugin or python code,
+below steps required due to MacOS security features.
+
+```sh
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+```
+
+Example ansible is prepared and stored in ansible-vault folder. Different options provided, how to use vault.
+Playbook is very simple and contains basic examples.
+
+>**_INFO:_** Some example requires environment variables, export as below:
+
+```sh
+export VAULT_ADDR=
+export VAULT_TOKEN=
+```
